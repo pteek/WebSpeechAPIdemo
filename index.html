@@ -6,24 +6,53 @@
 </head>
   <body>
     <h1>Under development</h1>
+    
     <textarea id="textarea" rows=10 cols=80></textarea>
     <button id="button" onclick="toggleStartStop()"></button>
+    
+    <div style="border:dotted;padding:10px">
+      <span id="final_span"></span>
+      <span id="interim_span" style="color:grey"></span>
+    </div>
+    
     <script type="text/javascript">
       var recognizing;
       var recognition = new webkitSpeechRecognition();
       recognition.continuous = true;
+      recognition.interimResults = true;
       reset();
       recognition.onend = reset;
 
       recognition.onresult = function (event) {
-        for (var i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results.final) {
-            textarea.value += event.results[i][0].transcript;
+        var final = "";
+        var interim = "";
+
+        console.log('results are here')
+        if (event.results === undefined) {
+            recognition.onend = null;
+            recognition.stop;
+            console.log('stopped due to undefined results');
+        }
+
+        for (var i = 0; i < event.results.length; ++i) {
+          if (event.results[i].final) {
+            conole.log('final result');
+            final += event.results[i][0].transcript;
+          } else {
+            console.log('intrim result');
+            interim += event.results[i][0].transcript;
           }
         }
+        final_span.innerHTML = final;
+        interim_span.innerHTML = interim;
+      }
+
+      recognition.onerror = function(event) {
+        console.log(event.error);
       }
 
       function reset() {
+        console.log('reset');
         recognizing = false;
         button.innerHTML = "Click to Speak";
       }
@@ -36,6 +65,8 @@
           recognition.start();
           recognizing = true;
           button.innerHTML = "Click to Stop";
+          final_span.innerHTML = "";
+          interim_span.innerHTML = "";
         }
       }
     </script>
