@@ -5,17 +5,33 @@
   <meta charset="UTF-8">
 </head>
   <body>
-    <h1>Under development</h1>
+    <h1>Google Webkit speech recognition Demo</h1>
+    <h3>Beta</h3>
     
-    <textarea id="textarea" rows=10 cols=80></textarea>
     <button id="button" onclick="toggleStartStop()"></button>
     
-    <div style="border:dotted;padding:10px">
+    <div style="border:solid;padding:10px">
       <span id="final_span"></span>
       <span id="interim_span" style="color:grey"></span>
     </div>
+
+    <div id = "selection">
+      <select id="language_menu" onchange="refreshdilect()"></select>
+      <select id="dialect_menu"></select>
+    </div>
     
     <script type="text/javascript">
+      languages = [["Hindi",["Hi-IN"]],["Bahasa Indonesia",["id-ID"]],["Bahasa Melayu",["ms-MY"]],["Català",["ca-ES"]],["Čeština",["cs-CZ"]],["Deutsch",["de-DE"]],["English",["en-AU","Australia"],["en-CA","Canada"],["en-IN","India"],["en-NZ","New Zealand"],["en-ZA","South Africa"],["en-GB","United Kingdom"],["en-US","United States"]],["Español",["es-AR","Argentina"],["es-BO","Bolivia"],["es-CL","Chile"],["es-CO","Colombia"],["es-CR","Costa Rica"],["es-EC","Ecuador"],["es-SV","El Salvador"],["es-ES","España"],["es-US","Estados Unidos"],["es-GT","Guatemala"],["es-HN","Honduras"],["es-MX","México"],["es-NI","Nicaragua"],["es-PA","Panamá"],["es-PY","Paraguay"],["es-PE","Perú"],["es-PR","Puerto Rico"],["es-DO","República Dominicana"],["es-UY","Uruguay"],["es-VE","Venezuela"]],["Euskara",["eu-ES"]],["Français",["fr-FR"]],["Galego",["gl-ES"]],["Hindi",["Hi_IN"]],["IsiZulu",["zu-ZA"]],["Íslenska",["is-IS"]],["Italiano",["it-IT","Italia"],["it-CH","Svizzera"]],["Magyar",["hu-HU"]],["Nederlands",["nl-NL"]],["Norsk bokmål",["nb-NO"]],["Polski",["pl-PL"]],["Português",["pt-BR","Brasil"],["pt-PT","Portugal"]],["Română",["ro-RO"]],["Slovenčina",["sk-SK"]],["Suomi",["fi-FI"]],["Svenska",["sv-SE"]],["Türkçe",["tr-TR"]],["български",["bg-BG"]],["Pусский",["ru-RU"]],["Српски",["sr-RS"]],["한국어",["ko-KR"]],["中文",["cmn-Hans-CN","普通话 (中国大陆)"],["cmn-Hans-HK","普通话 (香港)"],["cmn-Hant-TW","中文 (台灣)"],["yue-Hant-HK","粵語 (香港)"]],["日本語",["ja-JP"]],["Lingua latīna",["la"]]]
+
+      
+      for (var i = 0; i < languages.length; i++) {
+        language_menu.options[i] = new Option(languages[i][0], i);
+        };
+      language_menu.selectedIndex = 0;
+      refreshdilect();
+      dialect_menu.selectedIndex = 0;
+      //showInfo(info_start);
+
       var recognizing;
       var recognition = new webkitSpeechRecognition();
       recognition.continuous = true;
@@ -34,16 +50,19 @@
             console.log('stopped due to undefined results');
         }
 
-        for (var i = 0; i < event.results.length; ++i) {
-          if (event.results[i].final) {
-            conole.log('final result');
+        curr_transcript = final_span.innerHTML;
+
+        for (var i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            console.log('final result');
             final += event.results[i][0].transcript;
           } else {
             console.log('intrim result');
             interim += event.results[i][0].transcript;
           }
         }
-        final_span.innerHTML = final;
+
+        final_span.innerHTML = curr_transcript + final;
         interim_span.innerHTML = interim;
       }
 
@@ -62,6 +81,7 @@
           recognition.stop();
           reset();
         } else {
+          recognition.lang = dialect_menu.value;
           recognition.start();
           recognizing = true;
           button.innerHTML = "Click to Stop";
@@ -69,6 +89,19 @@
           interim_span.innerHTML = "";
         }
       }
+
+      function refreshdilect() {
+        for (var i = dialect_menu.options.length - 1; i >= 0; i--) {
+            dialect_menu.remove(i);
+        };
+        console.log('si',language_menu.selectedIndex);
+        var curr_lang = languages[language_menu.selectedIndex];
+        for (var i = 1; i < curr_lang.length; i++) {
+            dialect_menu.options.add(new Option(curr_lang[i][1], curr_lang[i][0]));
+        };
+        dialect_menu.style.visibility = curr_lang[1].length == 1 ? "hidden" : "visible";
+      }
+      
     </script>
   </body>
 </html>
