@@ -7,7 +7,7 @@
   <body>
     <h1>Google Webkit speech recognition Demo</h1>
     <h3>Beta</h3>
-    
+    <p1 id = "p1" style = "display:none">Currently speech recognition API is only implemented in Google Chrome.</p1>
     <button id="button" onclick="toggleStartStop()"></button>
     
     <div style="border:solid;padding:10px">
@@ -33,7 +33,14 @@
       //showInfo(info_start);
 
       var recognizing;
-      var recognition = new webkitSpeechRecognition();
+      
+      try{
+        var recognition = new webkitSpeechRecognition();
+      }
+      catch(ReferenceError){
+        document.getElementById("p1").style.display = "";
+        document.getElementById("button").style.display = "";
+      }
       recognition.continuous = true;
       recognition.interimResults = true;
       reset();
