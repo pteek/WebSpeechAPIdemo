@@ -1,63 +1,123 @@
  <!DOCTYPE html>
 <html>
   <head>
-  <title>WebSpeechAPIdemo</title>
-  <meta charset="UTF-8">
-</head>
+    <title>WebSpeechAPIdemo</title>
+    <meta charset="UTF-8">
+    <style type="text/css">
+      body{
+      max-width: 600px;
+      margin: auto;
+      font-size: 18px;
+      }
+
+      .intrim-box{
+        border:solid;
+        padding:10px;
+        margin-top: 2px;
+      }
+
+      .buttons{
+        padding: 0.5em;
+        display: inline-block;
+        margin: 1em auto;
+      }
+
+      #result{
+        display: block;
+        width: 100%;
+        height: 5em;
+        overflow-y: scroll;
+        border: 1px solid #333333;
+        line-height: 1.3em;
+      }
+    </style>
+
+  </head>
+
   <body>
-    <h1>speech recognition Demo</h1>
-    <h3>Beta</h3>
-    <p1 id = "p1" style = "display:none">Currently speech recognition API is only implemented in Google Chrome.</p1>
-    <button id="button" onclick="toggleStartStop()"></button>
-    
-    <div style="border:solid;padding:10px">
+    <h1>Web Speech Recognition API Demo</h1>
+
+    <p2 id = "p2" style = "display: none">Currently speech recognition API is only implemented in Google Chrome.</p2>
+
+    <h2>Results</h2>
+
+    <textarea id="result"></textarea>
+
+    <div class = "intrim-box">
       <span id="final_span"></span>
       <span id="interim_span" style="color:grey"></span>
+    </div>
+
+    <div style = "text-align:center">
+      <button id="button" class = "buttons" onclick = "toggleStartStop()">Start</button>
+      <button id="clear"class = "buttons" onclick = "clear()">Clear</button>
     </div>
 
     <div id = "selection">
       <select id="language_menu" onchange="refreshdilect()"></select>
       <select id="dialect_menu"></select>
     </div>
+
+    <div style = "margin-top: 4px">
+      <button id = "hh1"  style = "display: inline" onclick="hindi_help('।')">।</button>
+      <button id = "hh2"  style = "display: inline" onclick="hindi_help('ः')">ः</button>
+    </div>
+    <input type="checkbox" id = "auto_punc" name="auto-punc">Automatiacally add ।.<br>
+    <input type="checkbox" id = "no_end" name="noend">Never stop recognising.<span id = "no_end_span"></span><br>
     
     <script type="text/javascript">
       languages = [["Hindi",["Hi-IN"]],["Bahasa Indonesia",["id-ID"]],["Bahasa Melayu",["ms-MY"]],["Català",["ca-ES"]],["Čeština",["cs-CZ"]],["Deutsch",["de-DE"]],["English",["en-AU","Australia"],["en-CA","Canada"],["en-IN","India"],["en-NZ","New Zealand"],["en-ZA","South Africa"],["en-GB","United Kingdom"],["en-US","United States"]],["Español",["es-AR","Argentina"],["es-BO","Bolivia"],["es-CL","Chile"],["es-CO","Colombia"],["es-CR","Costa Rica"],["es-EC","Ecuador"],["es-SV","El Salvador"],["es-ES","España"],["es-US","Estados Unidos"],["es-GT","Guatemala"],["es-HN","Honduras"],["es-MX","México"],["es-NI","Nicaragua"],["es-PA","Panamá"],["es-PY","Paraguay"],["es-PE","Perú"],["es-PR","Puerto Rico"],["es-DO","República Dominicana"],["es-UY","Uruguay"],["es-VE","Venezuela"]],["Euskara",["eu-ES"]],["Français",["fr-FR"]],["Galego",["gl-ES"]],["Hindi",["Hi_IN"]],["IsiZulu",["zu-ZA"]],["Íslenska",["is-IS"]],["Italiano",["it-IT","Italia"],["it-CH","Svizzera"]],["Magyar",["hu-HU"]],["Nederlands",["nl-NL"]],["Norsk bokmål",["nb-NO"]],["Polski",["pl-PL"]],["Português",["pt-BR","Brasil"],["pt-PT","Portugal"]],["Română",["ro-RO"]],["Slovenčina",["sk-SK"]],["Suomi",["fi-FI"]],["Svenska",["sv-SE"]],["Türkçe",["tr-TR"]],["български",["bg-BG"]],["Pусский",["ru-RU"]],["Српски",["sr-RS"]],["한국어",["ko-KR"]],["中文",["cmn-Hans-CN","普通话 (中国大陆)"],["cmn-Hans-HK","普通话 (香港)"],["cmn-Hant-TW","中文 (台灣)"],["yue-Hant-HK","粵語 (香港)"]],["日本語",["ja-JP"]],["Lingua latīna",["la"]]]
 
       
+      var result = document.getElementById("result");
+      var auto_punc = document.getElementById("auto_punc");
+      var hh1 = document.getElementById("hh1");
+      var hh2 = document.getElementById("hh2");
+
+      var recognizing;
+
+      try{
+        var recognition = new webkitSpeechRecognition();
+      }
+      catch(ReferenceError){
+        document.getElementById('p2').style.display = "block";
+        document.getElementById("button").style.display = "none";
+      }
+      
+      var host = "localhost:8000";
+      if ((host == window.location.host) && (window.location.protocol != "https:")){
+        document.getElementById("no_end").disabled = true;
+        document.getElementById("no_end_span").innerHTML = "<a href='https://pteek.github.io/WebSpeechAPIdemo/'>Connect via TLS(https)</a>";
+      }
+
       for (var i = 0; i < languages.length; i++) {
         language_menu.options[i] = new Option(languages[i][0], i);
         };
       language_menu.selectedIndex = 0;
       refreshdilect();
       dialect_menu.selectedIndex = 0;
-      //showInfo(info_start);
 
-      var recognizing;
-      
-      try{
-        var recognition = new webkitSpeechRecognition();
-      }
-      catch(ReferenceError){
-        document.getElementById("p1").style.display = "";
-        document.getElementById("button").style.display = "";
-      }
       recognition.continuous = true;
       recognition.interimResults = true;
       reset();
-      recognition.onend = reset;
 
       recognition.onresult = function (event) {
         var final = "";
         var interim = "";
 
-        console.log('results are here')
+        if (final_span.innerHTML != ""){
+          result.textContent += final_span.innerHTML;
+          if (auto_punc.checked){
+            result.textContent += "।";
+          }
+          final_span.innerHTML = "";
+        }
+
         if (event.results === undefined) {
             recognition.onend = null;
             recognition.stop;
             console.log('stopped due to undefined results');
         }
-
-        curr_transcript = final_span.innerHTML;
 
         for (var i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
@@ -65,11 +125,11 @@
             final += event.results[i][0].transcript;
           } else {
             console.log('intrim result');
-            interim += event.results[i][0].transcript;
+            interim += event.results[i][0].transcript + ' (' + event.results[i][0].confidence.toFixed(2) + ')';
           }
         }
 
-        final_span.innerHTML = curr_transcript + final;
+        final_span.innerHTML = final;
         interim_span.innerHTML = interim;
       }
 
@@ -77,10 +137,20 @@
         console.log(event.error);
       }
 
+      recognition.onend = function() {
+        if(document.getElementById("no_end").checked){
+          reset();
+          toggleStartStop();
+        }
+        else{
+          reset();
+        }
+      }
+
       function reset() {
         console.log('reset');
         recognizing = false;
-        button.innerHTML = "Click to Speak";
+        button.innerHTML = "Start";
       }
 
       function toggleStartStop() {
@@ -91,17 +161,24 @@
           recognition.lang = dialect_menu.value;
           recognition.start();
           recognizing = true;
-          button.innerHTML = "Click to Stop";
+          button.innerHTML = "Stop";
           final_span.innerHTML = "";
           interim_span.innerHTML = "";
         }
       }
 
       function refreshdilect() {
+        if (language_menu.selectedIndex == 0) {
+          hh1.style.display = "inline";
+          hh2.style.display = "inline";
+        }
+        else{
+          hh1.style.display = "none";
+          hh2.style.display = "none";
+        }
         for (var i = dialect_menu.options.length - 1; i >= 0; i--) {
             dialect_menu.remove(i);
         };
-        console.log('si',language_menu.selectedIndex);
         var curr_lang = languages[language_menu.selectedIndex];
         for (var i = 1; i < curr_lang.length; i++) {
             dialect_menu.options.add(new Option(curr_lang[i][1], curr_lang[i][0]));
@@ -109,6 +186,13 @@
         dialect_menu.style.visibility = curr_lang[1].length == 1 ? "hidden" : "visible";
       }
       
+      function hindi_help(ch){
+        result.textContent += ch;
+      }
+
+      function clear(){
+        result.textContent = ''
+      }
     </script>
   </body>
 </html>
