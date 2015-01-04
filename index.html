@@ -84,7 +84,7 @@
         document.getElementById("button").style.display = "none";
       }
       
-      var host = "localhost:8000";
+      var host = "pteek.github.io";
       if ((host == window.location.host) && (window.location.protocol != "https:")){
         document.getElementById("no_end").disabled = true;
         document.getElementById("no_end_span").innerHTML = "<a href='https://pteek.github.io/WebSpeechAPIdemo/'>Connect via TLS(https)</a>";
@@ -139,6 +139,13 @@
 
       recognition.onend = function() {
         if(document.getElementById("no_end").checked){
+          if (final_span.innerHTML != ""){
+            result.textContent += final_span.innerHTML;
+            if (auto_punc.checked){
+              result.textContent += "।";
+            }
+            final_span.innerHTML = "";
+          }
           reset();
           toggleStartStop();
         }
